@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="依据《车站信号自动控制》第二版制作的铁路继电器与轨道电路 3D 交互教学实验台。">
+  <title>铁路继电器 · 3D 交互实验台</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="vendor/three.min.js"></script>
+  <script defer src="logic.js"></script>
+  <script defer src="model.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark" aria-hidden="true">R</span><span>铁路继电器<span class="brand-sub">3D 交互实验台</span></span></a>
+    <nav class="workspace-tabs" aria-label="学习场景">
+      <button id="bench-tab" class="active" aria-pressed="true">01 · 继电器原理</button>
+      <button id="track-tab" aria-pressed="false">02 · 轨道运行</button>
+    </nav>
+    <button id="help-button" class="quiet-button">使用说明</button>
+  </header>
+  <main class="workspace">
+    <aside class="library" aria-label="继电器类型">
+      <div class="section-eyebrow">RELAY COLLECTION</div>
+      <h1>从接点到行车状态</h1>
+      <p class="sidebar-intro">转动模型，接通电源。看见电、磁与机械之间的联系。</p>
+      <div id="relay-list" class="relay-list"></div>
+      <div class="sidebar-note"><span class="note-line"></span>常开、常闭说的是接点。<br>无极、偏极等说的是继电器类型。</div>
+      <div class="source-mini">岳强《车站信号自动控制》第二版<br>第 4.1 节 · 第 5.3 节</div>
+    </aside>
+    <section class="lab-main" aria-label="交互实验区域">
+      <div class="model-heading"><div><div id="model-kicker" class="section-eyebrow">AX 型安全继电器</div><h2 id="model-title">无极继电器</h2><p id="model-subtitle">正向、反向电流都能使其吸起</p></div><span id="state-badge" class="state-badge">↓ 落下</span></div>
+      <section class="viewer-card" aria-label="三维结构">
+        <div class="viewer-top"><span id="model-caption">内部结构 · 教学示意</span><div class="view-presets"><button data-view="iso" class="active" aria-label="立体视角">立体</button><button data-view="front" aria-label="正面视角">正面</button><button data-view="side" aria-label="侧面视角">侧面</button><button id="home-view" aria-label="重置视角">复位</button></div></div>
+        <div id="viewport" tabindex="0" role="img" aria-label="可旋转的继电器三维模型。拖动旋转，滚轮缩放，点击部件查看说明。"><div id="loading">正在组装三维模型…</div><div id="model-error" hidden></div></div>
+        <div class="viewer-bottom"><span>拖动旋转 · 滚轮缩放 · 点击部件</span><button id="export-model" class="text-button">↓ 导出 GLB 模型</button></div>
+      </section>
+      <div class="model-tools">
+        <label class="inline-check"><input id="labels" type="checkbox" checked>部件标注</label>
+        <label class="inline-check"><input id="field" type="checkbox" checked>磁路示意</label>
+        <label class="inline-check"><input id="cover" type="checkbox">透明外壳</label>
+        <label class="inline-check"><input id="slow" type="checkbox">慢动作</label>
+        <label class="explode-control" for="explode">拆解 <input id="explode" type="range" min="0" max="100" value="0"><output id="explode-value">0%</output></label>
+      </div>
+      <section class="control-panel" aria-label="实验控制">
+        <div id="bench-controls">
+          <div class="control-heading"><h3 id="power-label">线圈电源</h3><span id="power-hint">先通电，再切断电源观察返回动作</span></div>
+          <div id="polarity-controls" class="segmented power-switch"><button data-polarity="1">＋ 正向通电</button><button data-polarity="0" class="active">○ 断电</button><button data-polarity="-1">− 反向通电</button></div>
+          <div id="ac-controls" class="segmented power-switch" hidden><button data-ac="1">∿ 交流供电</button><button data-ac="0" class="active">○ 断电</button></div>
+          <div id="rectifier-waveforms" class="waveform-panel" hidden></div>
+        </div>
+        <div id="track-controls" hidden>
+          <div class="control-heading"><h3>列车运行</h3><span id="train-position-label">尚未进入区段</span></div>
+          <div class="train-controls"><button id="play-train" class="primary-button">▶ 列车通过</button><button id="reset-train" class="quiet-button">回到区段外</button><label for="train-position" class="sr-only">前轮位置，区段起点为0，终点为100</label><input id="train-position" type="range" min="-25" max="145" step="0.1" value="-20"></div>
+          <div class="fault-controls"><label class="inline-check"><input id="power" type="checkbox" checked>送电电源</label><label class="inline-check"><input id="rail-break" type="checkbox">模拟轨道断路</label><label class="inline-check"><input id="receiver-break" type="checkbox">受电线断开</label><label id="multi-label" class="inline-check"><input id="multi" type="checkbox">一送两受</label><label id="branch-occupied-label" class="inline-check" hidden><input id="branch-occupied" type="checkbox">分支占用</label></div>
+        </div>
+        <div id="phase-controls" class="phase-controls" hidden>
+          <label class="inline-check"><input id="local-power" type="checkbox" checked>局部电源</label>
+          <label>频率条件 <select id="frequency"><option value="correct">符合 25 Hz 要求</option><option value="wrong">不符合要求</option></select></label>
+          <label>相位条件 <select id="phase"><option value="correct">符合要求</option><option value="reversed">相位反接</option><option value="wrong">不符合要求</option></select></label>
+        </div>
+      </section>
+      <section class="circuit-panel" aria-label="同步原理图">
+        <div class="panel-heading"><h3 id="circuit-title">电路与接点同步</h3><span class="legend"><i class="legend-on"></i>有电流／接通 <i class="legend-off"></i>无电流／断开</span></div>
+        <div id="circuit"></div>
+        <p id="circuit-note" class="circuit-note"></p>
+      </section>
+      <div class="timeline-panel" id="timeline-panel" hidden><h3>本次运行记录</h3><ol id="timeline"></ol></div>
+    </section>
+    <aside class="inspector" aria-label="动作状态与原理说明">
+      <section class="status-panel"><div class="section-eyebrow">LIVE STATE</div><h3>当前发生了什么</h3><dl id="state-readout" aria-live="polite"></dl><div id="action-chain" class="action-chain"></div><p id="state-reason" class="state-reason"></p></section>
+      <section class="principle-panel"><div class="section-eyebrow">HOW IT WORKS</div><h3 id="principle-title">为什么会动作</h3><div id="principle"></div></section>
+      <section id="part-panel" class="part-panel"><div class="section-eyebrow">EXPLORE A PART</div><h3 id="part-title">点击模型中的部件</h3><p id="part-description">从线圈开始，看看电流如何变成接点的机械动作。</p><div id="part-list" class="part-chips"></div></section>
+      <section class="challenge"><div class="section-eyebrow">TRY IT YOURSELF</div><h3>先猜，再操作</h3><p id="challenge-question"></p><button id="challenge-answer" class="text-button">查看解释 →</button><p id="challenge-explanation" hidden></p></section>
+      <section class="reference-panel"><h3>教材依据与模型边界</h3><p id="reference"></p><p id="model-boundary"></p><button id="source-button" class="text-button">查看来源与简化说明 →</button></section>
+    </aside>
+  </main>
+  <footer>以接点连接解释状态，以教材条件解释动作。<span>教学模型 · 非设备尺寸复刻</span></footer>
+  <dialog id="help-dialog"><div class="dialog-heading"><h2>怎样使用实验台</h2><button class="dialog-close quiet-button" aria-label="关闭说明">关闭 ✕</button></div><ol><li>在左侧选一种继电器，点击正向通电、反向通电或断电。</li><li>拖动模型旋转、滚轮缩放；点击实体或右侧部件名，查看作用。也可聚焦模型后用方向键旋转、＋／− 缩放。</li><li>打开透明外壳、拆解结构或慢动作，对照下方接点图观察动作。</li><li>切到“轨道运行”，点击“列车通过”或拖动位置，比较空闲、分路与故障。</li><li>整流式场景可打开“一送两受”；相敏式场景可改变局部电源、频率和相位条件。</li></ol><p>绿色表示接通或满足条件，灰色表示断开；所有状态同时有文字说明。GJ 吸起只提供区段空闲条件，不能单独决定信号开放。</p><p>GLB 导出保留当前拆解和衔铁姿态，可用常见三维查看器或 Blender 打开；文字标注、磁路动画与交互程序不在 GLB 中。</p></dialog>
+  <dialog id="source-dialog"><div class="dialog-heading"><h2>来源、适用条件与简化</h2><button class="dialog-close quiet-button" aria-label="关闭来源说明">关闭 ✕</button></div><p>主要依据：岳强主编《车站信号自动控制》第二版，中国铁道出版社，2024 年。本项目提供的原 PDF 文件名为“传感器自动控制.pdf”。相关原图已核对。</p><ul><li>第 4.1 节：书内 44—49 页／PDF 54—59 页；图 4.1.1—4.1.7。无极、偏极、极性保持的工作原理、接点与常态。</li><li>第 5.3.1 节：书内 77—78 页／PDF 87—88 页；图 5.3.1—5.3.2。JZXC-480 整流式轨道电路及一送多受。</li><li>第 5.3.2 节：书内 78—79 页／PDF 88—89 页；图 5.3.3。25 Hz 相敏轨道电路及二元二位轨道继电器的接口条件。</li></ul><p><strong>教材与补充示意：</strong>AX 机构按图示提取核心部件，不按实物尺寸建模；偏极与极性保持保留永久磁铁和动作差别，但机械连接采用简化教学结构。教材没有展开二元二位继电器内部机构，本模型中双电磁系统、铝翼与转矩的表示属于补充原理示意，不对应具体产品构造。整流模块和波形为等效示意，不表示 JZXC-480 的完整内部接线。</p><p><strong>状态与时间：</strong>状态由教材给出的条件进行离散判断，不计算真实磁场、电流阈值、相角或轨道参数。动画速度、线圈匝数、间隙和比例都是教学设定；接点切换采用先断后接示意。暂态中右侧会显示“转换中”，稳态结果在动画结束后显示。</p><p><strong>轨道场景：</strong>轮对以理想低阻分路表示；轨道断路以单一导电路径断开表示，不推论所有实际断轨均可检出。一送两受示意中，主 DGJ 励磁回路串入支 DGJ₁ 的前接点；任一分支不能证明空闲时，总检查不成立。相敏场景不同时叠加这套整流式一送两受示意。</p><p><strong>术语：</strong>普通单稳态继电器释放时，中—前断开、中—后接通；可对应通常所说的常开／常闭。铁路“常态”按设备通常状态确定，GJ 常态为吸起。极性保持继电器断电仍可保持原位，不能套用“断电必落下”。</p><p>图 4.1.5 的正文存在图 (a)/(b) 对应交叉，模型采用正文明确的电流方向规则：1 进 4 出为定位，4 进 1 出为反位，断电保持。</p><p>3D 引擎：Three.js r160，MIT 许可；许可证随本地文件附带。模型与课程逻辑由本项目制作。</p></dialog>
+  <div id="toast" role="status" hidden></div>
+  <noscript>需要启用 JavaScript 才能操作三维教学模型。</noscript>
+</body>
+</html>
