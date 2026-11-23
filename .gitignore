@@ -1,4 +1,8 @@
-outputs/
-*.zip
 .DS_Store
 __pycache__/
+*.zip
+.openai/
+launchers/
+outputs/*
+!outputs/models/
+!outputs/models/*.glb

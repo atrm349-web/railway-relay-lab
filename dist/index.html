@@ -3,83 +3,411 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="依据《车站信号自动控制》第二版制作的铁路继电器与轨道电路 3D 交互教学实验台。">
-  <title>铁路继电器 · 3D 交互实验台</title>
-  <link rel="stylesheet" href="styles.css">
-  <script defer src="vendor/three.min.js"></script>
-  <script defer src="logic.js"></script>
-  <script defer src="model.js"></script>
-  <script defer src="app.js"></script>
+  <meta name="description" content="依据岳强《车站信号自动控制》（第二版）构建的全书13章闭合学习工作台：3D继电器拆解、核心接口电路、6502全站联锁沙盘、计算机联锁实验室与277页原书/127道思考题闭环库。">
+  <title>车站信号自动控制 · 全书闭合 3D 交互实验台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23121b27' stroke='%237de0bd'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='monospace' font-size='19' fill='%237de0bd'%3ER%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css?v=20261120d">
+  <script defer src="vendor/three.min.js?v=20261120d"></script>
+  <script defer src="journey.js?v=20261120d"></script>
+  <script defer src="logic.js?v=20261120d"></script>
+  <script defer src="sources.js?v=20261120d"></script>
+  <script defer src="curriculum.js?v=20261120d"></script>
+  <script defer src="cbi.js?v=20261120d"></script>
+  <script defer src="figdata-yard.js?v=20261120d"></script>
+  <script defer src="figdata-circuit-a.js?v=20261120d"></script>
+  <script defer src="figdata-circuit-b.js?v=20261120d"></script>
+  <script defer src="figdata-sys.js?v=20261120d"></script>
+  <script defer src="figlab.js?v=20261120d"></script>
+  <script defer src="hub.js?v=20261120d"></script>
+  <script defer src="model.js?v=20261120d"></script>
+  <script defer src="app.js?v=20261120d"></script>
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="#"><span class="brand-mark" aria-hidden="true">R</span><span>铁路继电器<span class="brand-sub">3D 交互实验台</span></span></a>
+    <a class="brand" href="#"><span class="brand-mark" aria-hidden="true">R</span><span>车站信号<span class="brand-sub">全书闭合 3D 实验台</span></span></a>
     <nav class="workspace-tabs" aria-label="学习场景">
-      <button id="bench-tab" class="active" aria-pressed="true">01 · 继电器原理</button>
-      <button id="track-tab" aria-pressed="false">02 · 轨道运行</button>
+      <button id="curriculum-tab" aria-pressed="false">00 · 全书路径 &amp; 127题库</button>
+      <button id="bench-tab" class="active" aria-pressed="true">01 · 继电器与接口 (15项)</button>
+      <button id="signal-tab" aria-pressed="false">2.3 · 信号机建模 (6型)</button>
+      <button id="track-tab" aria-pressed="false">02 · 轨道电路分路</button>
+      <button id="station-tab" aria-pressed="false">03 · 图3.1.1/表3.2.2 车站联锁</button>
+      <button id="cbi-tab" aria-pressed="false">04 · 站场 · 联锁表 · 计算机联锁</button>
+      <button id="figures-tab" aria-pressed="false">05 · 全书168图仿真</button>
     </nav>
     <button id="help-button" class="quiet-button">使用说明</button>
   </header>
-  <main class="workspace">
-    <aside class="library" aria-label="继电器类型">
-      <div class="section-eyebrow">RELAY COLLECTION</div>
-      <h1>从接点到行车状态</h1>
-      <p class="sidebar-intro">转动模型，接通电源。看见电、磁与机械之间的联系。</p>
+  <section id="curriculum-lab" class="full-stage" hidden aria-label="全书13章学习路径与127道复习思考题"></section>
+  <section id="cbi-lab" class="full-stage" hidden aria-label="站场规则、表3.2.2联锁表与计算机联锁实验室"></section>
+  <section id="figures-lab" class="full-stage" hidden aria-label="全书168幅教材插图实时交互仿真馆"></section>
+  <main id="workspace-3d" class="workspace">
+    <aside class="library" aria-label="继电器与接口电路">
+      <div id="lib-eyebrow" class="section-eyebrow">RELAY &amp; INTERFACE LABS</div>
+      <h1 id="lib-title">从接点到全站联锁</h1>
+      <p id="lib-intro" class="sidebar-intro">涵盖表4.1.1—4.1.4全部继电器、第4章自闭/5法防混线、第5章四线/五线制道岔与第13章安全驱采接口。</p>
       <div id="relay-list" class="relay-list"></div>
-      <div class="sidebar-note"><span class="note-line"></span>常开、常闭说的是接点。<br>无极、偏极等说的是继电器类型。</div>
-      <div class="source-mini">岳强《车站信号自动控制》第二版<br>第 4.1 节 · 第 5.3 节</div>
+      <div id="signal-list" class="relay-list" hidden></div>
+      <div id="lib-note" class="sidebar-note"><span class="note-line"></span>常开、常闭说的是接点。<br>铁路“常态”按设备通常状态与安全侧确定（GJ、DBJ、SJ、DJ常态吸起↑；XJ、1DQJ、FDGJ常态落下↓）。</div>
+      <div class="source-mini">岳强《车站信号自动控制》第二版<br>全书第 1—13 章闭合联动（缺附录3已标）</div>
     </aside>
     <section class="lab-main" aria-label="交互实验区域">
       <div class="model-heading"><div><div id="model-kicker" class="section-eyebrow">AX 型安全继电器</div><h2 id="model-title">无极继电器</h2><p id="model-subtitle">正向、反向电流都能使其吸起</p></div><span id="state-badge" class="state-badge">↓ 落下</span></div>
       <section class="viewer-card" aria-label="三维结构">
         <div class="viewer-top"><span id="model-caption">内部结构 · 教学示意</span><div class="view-presets"><button data-view="iso" class="active" aria-label="立体视角">立体</button><button data-view="front" aria-label="正面视角">正面</button><button data-view="side" aria-label="侧面视角">侧面</button><button id="home-view" aria-label="重置视角">复位</button></div></div>
-        <div id="viewport" tabindex="0" role="img" aria-label="可旋转的继电器三维模型。拖动旋转，滚轮缩放，点击部件查看说明。"><div id="loading">正在组装三维模型…</div><div id="model-error" hidden></div></div>
-        <div class="viewer-bottom"><span>拖动旋转 · 滚轮缩放 · 点击部件</span><button id="export-model" class="text-button">↓ 导出 GLB 模型</button></div>
+        <div id="viewport" tabindex="0" role="img" aria-label="可旋转的继电器与车站联锁三维模型。拖动旋转，滚轮缩放，点击部件查看说明。">
+          <div id="loading">正在组装三维模型…</div>
+          <div id="model-error" hidden></div>
+          <div id="crisp-labels" aria-hidden="true"><svg id="label-leaders"></svg><div id="label-texts"></div></div>
+          <div id="pip-banner" class="pip-banner" hidden>
+            <div class="pip-info">
+              <strong id="pip-title">1DQJ · 一启动继电器</strong>
+              <span id="pip-meta">型号：JWJXC-H125/0.44 ｜ 常态↓ · 平时11-13闭合</span>
+            </div>
+            <div class="pip-actions">
+              <button id="pip-jump-relay" class="primary-button">🔍 微距拆解此继电器</button>
+              <button id="pip-jump-topic" class="quiet-button" hidden>📐 进入对应电路实验</button>
+              <button id="pip-close" class="quiet-button" aria-label="关闭浮窗">✕</button>
+            </div>
+          </div>
+        </div>
+        <div id="relay-change-banner" class="relay-change-banner" hidden></div>
+        <div class="viewer-bottom"><span>拖动旋转 · 滚轮缩放 · 点击三维部件或组合架继电器微距查看</span><button id="export-model" class="text-button">↓ 导出 GLB 模型</button></div>
       </section>
       <div class="model-tools">
         <label class="inline-check"><input id="labels" type="checkbox" checked>部件标注</label>
-        <label class="inline-check"><input id="field" type="checkbox" checked>磁路示意</label>
+        <label class="inline-check"><input id="field" type="checkbox" checked>磁路/电流示意</label>
         <label class="inline-check"><input id="cover" type="checkbox">透明外壳</label>
         <label class="inline-check"><input id="slow" type="checkbox">慢动作</label>
+        <label class="inline-check"><input id="sound" type="checkbox" checked>机械音效</label>
         <label class="explode-control" for="explode">拆解 <input id="explode" type="range" min="0" max="100" value="0"><output id="explode-value">0%</output></label>
       </div>
+      <section id="study-tools" class="study-tools" aria-label="模型观察与比较">
+        <button id="contact-focus" class="quiet-button" aria-pressed="false">接点局部放大</button>
+        <button id="train-focus" class="quiet-button" hidden>列车近景</button>
+        <label id="comparison-control">型号并排比较 <select id="comparison-pair">
+          <option value="">单件观察</option><option value="polarity">无极 / 偏极</option>
+          <option value="memory">无极 / 极性保持</option><option value="release">普通 / 缓放</option>
+          <option value="delay">缓放 / 时间继电器</option>
+        </select></label>
+        <div id="contact-steps" class="contact-steps" hidden>
+          <button data-contact-pose="0" class="quiet-button">后接点闭合</button>
+          <button data-contact-pose="0.5" class="quiet-button">转换中 · 两路断开</button>
+          <button data-contact-pose="1" class="quiet-button">前接点闭合</button>
+          <button id="contact-live" class="quiet-button">恢复随供电动作</button>
+          <p id="contact-step-note"></p>
+        </div>
+        <div id="comparison-readout" class="comparison-readout" hidden></div>
+      </section>
       <section class="control-panel" aria-label="实验控制">
         <div id="bench-controls">
           <div class="control-heading"><h3 id="power-label">线圈电源</h3><span id="power-hint">先通电，再切断电源观察返回动作</span></div>
           <div id="polarity-controls" class="segmented power-switch"><button data-polarity="1">＋ 正向通电</button><button data-polarity="0" class="active">○ 断电</button><button data-polarity="-1">− 反向通电</button></div>
           <div id="ac-controls" class="segmented power-switch" hidden><button data-ac="1">∿ 交流供电</button><button data-ac="0" class="active">○ 断电</button></div>
+          <div id="filament-controls" class="phase-controls" hidden>
+            <label>信号机接口电路 <select id="filament-sys"><option value="inStation">进站信号机接口（图5.1.2）</option><option value="outDep">两方向出站兼调车信号机接口（图5.1.3）</option></select></label>
+            <label>灯丝回路状态 <select id="filament-mode"><option value="main">主灯丝完好（DJ ↑）</option><option value="backup">主灯丝断丝 → 自动转副灯丝（DZJ ↓ · DJ ↑）</option><option value="broken">主、副灯丝双断丝（DJ 缓放后 ↓）</option></select></label>
+            <label id="filament-out-wrap" hidden>出站兼调车显示 <select id="filament-out-aspect"><option value="L">正向3+空闲 → L 绿灯 (2LQJ↑·3LQJ↑)</option><option value="LU">正向2空闲 → LU 绿黄灯 (2LQJ↑·3LQJ↓·2DJ↑)</option><option value="U">正向1空闲 → U 单黄灯 (2LQJ↓)</option><option value="L_REV">反向发车 → L + 方向表示器 (先检3DJ↑)</option><option value="B">调车作业 → B 月白灯 (DXJ↑)</option><option value="H">平时常态 → H 红灯</option></select></label>
+          </div>
           <div id="rectifier-waveforms" class="waveform-panel" hidden></div>
         </div>
+        <div id="signal-controls" hidden>
+          <div class="control-heading"><h3 id="sig-ctrl-title">第 2.3.3 节 信号机机构、灯光显示与第 5.1 节继电器结合</h3><span id="sig-variant-label">机构型式 (PDF p.26)</span></div>
+          <div id="signal-variants" class="segmented power-switch"></div>
+          <div id="signal-aspects" class="stage-bar" aria-label="信号机显示方式"></div>
+          <div class="phase-controls">
+            <label>第 5.1 节灯丝监督与双丝转换 (JZXC-H62 · DJ)
+              <select id="signal-filament">
+                <option value="main">主灯丝 H₁ 正常点亮（DJ ↑ · DZJ ↑）</option>
+                <option value="backup">主丝断丝 → DZJ ↓ 自动转副灯丝 H₂（DJ ↑ 维持）</option>
+                <option value="broken">主/副双断丝 → DJ ↓ 信号灭灯（故障导向安全）</option>
+              </select>
+            </label>
+            <label id="signal-ind-wrap" class="inline-check" hidden><input id="signal-ind" type="checkbox">点亮发车进路方向表示器（右 →）</label>
+            <label id="signal-dj2-wrap" class="inline-check" hidden><input id="signal-dj2" type="checkbox">§5.1.2(3) 第2允许灯丝断丝 (2DJ↓ 强制降回红灯防升级)</label>
+          </div>
+        </div>
+        <div id="selfhold-controls" hidden>
+          <div class="control-heading"><h3>图 4.2.2 自闭电路 4 步实验 &amp; 图 4.3.1–4.3.5 断线与 5 种混线防护</h3><span id="selfhold-step-label">常态落下 · 等待按压自复按钮 A</span></div>
+          <div class="segmented power-switch">
+            <button id="sh-press-a">① 按下自复按钮 A（启动支路导通）</button>
+            <button id="sh-release-a" class="active">② 松开按钮 A（观察 AJ11-12 自闭）</button>
+            <button id="sh-play-demo">▶ 自动演示 4 步自闭全过程</button>
+          </div>
+          <div class="fault-controls">
+            <label class="inline-check"><input id="sh-fuj" type="checkbox">③ 触发复原继电器 FUJ 励磁吸起（断开11-13切断自闭）</label>
+            <label class="inline-check"><input id="sh-wire-break" type="checkbox">图4.3.1 模拟共用供电线断线（闭路原则防护）</label>
+            <label class="inline-check" id="sh-shunt-wrap" hidden><input id="sh-shunt-break" type="checkbox">破坏分路法(KJF)自身分路线断线（暴露非故障安全缺陷！）</label>
+          </div>
+          <div class="phase-controls">
+            <label>第4.3.2节 防护体制对比
+              <select id="sh-cross-method">
+                <option value="position">方法1：位置法（远端供电，图4.3.2 · 故障—安全）</option>
+                <option value="polarity">方法2：极性法（1JBJ/2JBJ反极性串联，图4.3.3）</option>
+                <option value="doubleBreak">方法3：双断法（去/回线双极控制，图4.3.4 · 降危险概率）</option>
+                <option value="isolatedPower">方法4：独立电源法（无公共回线隔离）</option>
+                <option value="shunt">方法5：分路法/等电位法（图4.3.5 · 分路线断线不受查）</option>
+              </select>
+            </label>
+            <label>混线/短路故障状态
+              <select id="sh-cross-fault">
+                <option value="none">正常绝缘（无混线短路）</option>
+                <option value="naive">图4.3.2(a) 错误接法(同端供电混线 → 误吸！)</option>
+                <option value="active">在当前选定防护体制下注入电缆混线/混入电源故障</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div id="turnout-controls" hidden>
+          <div class="control-heading"><h3>第 5.2.2 节 单动道岔四线制控制与表示电路（图 5.2.2–5.2.3）</h3><span id="turnout-stage-label">阶段 0 · 定位稳态（DBJ ↑）</span></div>
+          <div id="turnout-stages" class="stage-bar" aria-label="四线制道岔转换阶段">
+            <button data-to-stage="0" class="active">0 定位稳态 (DBJ↑)</button>
+            <button data-to-stage="1">1 操岔启动 (1DQJ 125Ω↑)</button>
+            <button data-to-stage="2">2 2DQJ转极 (1DQJ铜套缓放)</button>
+            <button data-to-stage="3">3 电机M旋转 (0.44Ω自闭·B爪动)</button>
+            <button data-to-stage="4">4 反位密贴 (A爪动·FBJ↑)</button>
+            <button id="play-turnout" class="primary-button">▶ 自动演示转换</button>
+          </div>
+          <div class="fault-controls">
+            <label class="inline-check"><input id="to-obstacle" type="checkbox">模拟尖轨与基本轨间夹异物受阻（电机空转 13~30s 烧熔丝 RD₂ / B爪41-42提前准备好回转）</label>
+            <label class="inline-check"><input id="to-lid-open" type="checkbox">打开转辙机机盖（安全遮断器 05-06 断开切断动作电路）</label>
+            <label class="inline-check"><input id="to-sj-locked" type="checkbox">模拟道岔锁闭/区段有车 SJ↓（启动前禁动；启动后 1DQJ 0.44Ω 自闭脱离 SJ 继续转到底！）</label>
+            <label>表示回路故障（5.2.2节 PDF p.82）：
+              <select id="to-ind-fault">
+                <option value="none">正常（半波整流 Z + 滤波电容 C → DBJ/FBJ 稳定吸起）</option>
+                <option value="wireCross">① 外线混线（Z 被短接送入交流电 → 偏极 JPXC-1000 不吸起）</option>
+                <option value="capShort">② 滤波电容 C 击穿短路（短接线圈 → DBJ/FBJ 落下）</option>
+                <option value="capOpen">③ 滤波电容 C 引线断线（失去滤波续流 → DBJ/FBJ 脉动颤动）</option>
+                <option value="trailThrough">④ 挤岔故障（移位接触器 01-02/03-04 顶开 → DBJ/FBJ 双落报警）</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div id="fivewire-controls" hidden>
+          <div class="control-heading"><h3>第 5.2.3 节 三相交流五线制道岔控制与表示（S700K · 图 5.2.4–5.2.8）</h3><span id="fivewire-stage-label">阶段 0 · 定位稳态（DBJ ↑）</span></div>
+          <div id="fivewire-stages" class="stage-bar" aria-label="五线制道岔转换阶段">
+            <button data-fw-stage="0" class="active">0 定位稳态 (Z并联·无C)</button>
+            <button data-fw-stage="1">1 一级启动 (1DQJ↑/1DQJF↑)</button>
+            <button data-fw-stage="2">2 二级转极 (2DQJ换相)</button>
+            <button data-fw-stage="3">3 三级自闭 (DBQ→BHJ↑三相转)</button>
+            <button data-fw-stage="4">4 反位到位 (BHJ↓·FBJ↑)</button>
+            <button id="play-fivewire" class="primary-button">▶ 自动演示转换</button>
+          </div>
+          <div class="fault-controls">
+            <label class="inline-check"><input id="fw-phase-loss" type="checkbox">模拟三相电源缺相（DBQ 断相保护 → BHJ 立即↓切断自闭）</label>
+            <label class="inline-check"><input id="fw-lid-open" type="checkbox">打开检修机盖（遮断开关 K 断开串在 U 相动作回路）</label>
+          </div>
+        </div>
+        <div id="cbiio-controls" hidden>
+          <div class="control-heading"><h3>第 11.3 &amp; 13.2 节 计算机联锁动态驱采与故障—安全输出（图 13.2.2–13.2.4）</h3><span id="cbiio-label">正常动态方波脉冲输出 → J ↑</span></div>
+          <div class="phase-controls" style="margin-top:0;padding-top:0;border-top:0">
+            <label>安全 I/O 电路体制
+              <select id="cbi-io-mode">
+                <option value="pulseTrans">① 动态输出：脉冲变压器隔直传交电路（图13.2.3）</option>
+                <option value="capPump">② 动态输出：互补三极管电容电荷泵电路（图13.2.4）</option>
+                <option value="staticIn">③ 静态输入：不对称编码 1010/0101 安全采集（图13.2.2a）</option>
+                <option value="dynamicIn">④ 动态输入：探测脉冲回采闭环校验（图13.2.2b）</option>
+              </select>
+            </label>
+            <label class="inline-check"><input id="cbi-io-cmd" type="checkbox" checked>联锁主软件下发“吸起”命令 / 输入接点闭合</label>
+          </div>
+          <div class="fault-controls">
+            <label>注入硬件/芯片致命故障：
+              <select id="cbi-io-fault">
+                <option value="none">无故障（正常脉冲或有效编码 0101/1010）</option>
+                <option value="stuckHigh">⚠ 模拟 CPU 死机端口“卡死在常高电平 1”！（检验 T 隔直与电容泵）</option>
+                <option value="stuckLow">模拟输出/采集端口卡死常低电平 0</option>
+                <option value="wireOpen">模拟电路断线 / 电容开路</option>
+                <option value="diodeShort">模拟二极管 D1 反向击穿或编码损坏(1100)</option>
+              </select>
+            </label>
+          </div>
+        </div>
         <div id="track-controls" hidden>
-          <div class="control-heading"><h3>列车运行</h3><span id="train-position-label">尚未进入区段</span></div>
-          <div class="train-controls"><button id="play-train" class="primary-button">▶ 列车通过</button><button id="reset-train" class="quiet-button">回到区段外</button><label for="train-position" class="sr-only">前轮位置，区段起点为0，终点为100</label><input id="train-position" type="range" min="-25" max="145" step="0.1" value="-20"></div>
-          <div class="fault-controls"><label class="inline-check"><input id="power" type="checkbox" checked>送电电源</label><label class="inline-check"><input id="rail-break" type="checkbox">模拟轨道断路</label><label class="inline-check"><input id="receiver-break" type="checkbox">受电线断开</label><label id="multi-label" class="inline-check"><input id="multi" type="checkbox">一送两受</label><label id="branch-occupied-label" class="inline-check" hidden><input id="branch-occupied" type="checkbox">分支占用</label></div>
+          <div class="control-heading"><h3>列车运行（轨道电路区段）</h3><span id="train-position-label">尚未进入区段</span></div>
+          <div class="train-controls"><button id="play-train" class="primary-button">▶ 列车通过</button><button id="reset-train" class="quiet-button">回到区段外</button><label for="train-position" class="sr-only">前轮位置，区段起点为0，终点为100</label><input id="train-position" type="range" min="-25" max="165" step="0.1" value="-20"></div>
+          <div class="fault-controls"><label class="inline-check"><input id="power" type="checkbox" checked>送电电源</label><label class="inline-check"><input id="rail-break" type="checkbox">模拟轨道断路</label><label class="inline-check"><input id="receiver-break" type="checkbox">模拟受电线断开</label><label id="multi-label" class="inline-check"><input id="multi" type="checkbox">一送两受</label><label id="branch-occupied-label" class="inline-check" hidden><input id="branch-occupied" type="checkbox">分支占用</label></div>
+        </div>
+        <div id="station-controls" hidden>
+          <div class="station-top-bar">
+            <div class="station-top-row">
+              <strong style="font-size:12px;color:var(--accent)">🚄 多列车同时运行快捷切换（教材第2.5.2 / 3.1.1 / 3.3.4 / 9.4节）</strong>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <label style="font-size:11px;color:#b8cade">运行倍速
+                  <select id="station-speed" style="margin-left:4px;border:1px solid #3c4b5a;border-radius:4px;color:var(--text);background:#1a2735;padding:2px 6px;font-size:11px">
+                    <option value="0.2">0.2× 极慢细看</option>
+                    <option value="0.35" selected>0.35× 教学慢放(推荐)</option>
+                    <option value="0.6">0.6× 中速</option>
+                    <option value="1">1.0× 标准</option>
+                  </select>
+                </label>
+                <label class="inline-check" style="font-size:11px"><input id="station-pause-change" type="checkbox">逢继电器变化自动定格 1.5s</label>
+              </div>
+            </div>
+            <div id="station-mt-pills" class="station-top-pills">
+              <button data-mt="none" class="active">单列车运行</button>
+              <button data-mt="parallel_rec_dep">① 双车平行：接IG ∥ 发XF</button>
+              <button data-mt="parallel_dual_rec">② 双线同向并行接车</button>
+              <button data-mt="parallel_shunt">③ 绝缘隔离平行调车</button>
+              <button data-mt="conflict_queue">④ 抵触排队等解锁跟进</button>
+              <button data-mt="track_occupied">⑤ 股道占车(HB引导/调连)</button>
+            </div>
+          </div>
+          <div class="control-heading"><h3>图 3.1.1 下行咽喉全作业联锁沙盘 &amp; 15 线透视</h3><span id="station-stage-label">阶段 5 · 信号开放与运行</span></div>
+          <div id="station-routes" class="segmented power-switch">
+            <button data-route="IG" class="active">X → IG 正线接车 (U)</button>
+            <button data-route="3G">X → 3G 侧线接车 (UU)</button>
+            <button data-route="DEP">S₁ → X 正线发车 (L)</button>
+            <button data-route="SHUNT">D₁ → D₇ 调车作业 (B)</button>
+          </div>
+          <div class="train-controls" style="margin-top:11px">
+            <button id="play-station" class="primary-button">▶ 全流程演示</button>
+            <button id="btn-next-relay" class="quiet-button" style="border-color:#3a6456;color:var(--accent);background:#142b25">⏭ 步进到下一继电器变化</button>
+            <button id="reset-station" class="quiet-button">重新开始运行记录</button>
+            <label>运行方向 <select id="station-direction"><option value="1">沿进路前进</option><option value="-1">倒退观察</option></select></label>
+            <label for="station-train" style="font-size:12px;color:#9ec0d8;white-space:nowrap">手动位置观察（拖拽将写入本次运行记录）</label>
+            <input id="station-train" type="range" min="-30" max="130" step="0.2" value="-26">
+            <output id="station-position"></output>
+            <div class="traction-controls"><label class="inline-check"><input id="pantograph" type="checkbox" checked>升弓</label><label class="inline-check"><input id="catenary-power" type="checkbox" checked>接触网有电</label><label class="inline-check"><input id="main-breaker" type="checkbox" checked>主断路器闭合</label><label class="inline-check"><input id="train-brake" type="checkbox">施加制动</label><output id="traction-state"></output></div>
+          </div>
+          <div class="route-322-bar">
+            <label>表 3.2.2 下行咽喉全 33 条进路（一号主列车 A）
+              <select id="station-route-322"></select>
+            </label>
+            <div id="station-lock-card" class="station-lock-card"></div>
+          </div>
+          <div class="route-322-bar" style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--edge)">
+            <label>多列车场景详情与自定义二号车 B（同步上方快捷按钮）
+              <select id="station-multitrain-mode">
+                <option value="none">单列车独立运行（默认 · 逐区段驱动 Q 组合继电器链）</option>
+                <option value="parallel_rec_dep">① 平行作业：Ⅰ道接车 (X→IG) ∥ Ⅱ道发车 (SⅡ→X_F) 双车相向同跑</option>
+                <option value="parallel_dual_rec">② 平行作业：双线同向同时接车 (X→IG ∥ X_F→IIG) 并排进站</option>
+                <option value="parallel_shunt">③ 带动/绝缘隔离平行调车：左端 D₁→D₅(1/3反) ∥ 右端 D₇→IG(5/7定)</option>
+                <option value="conflict_queue">④ 抵触排队与分段解锁：一号车 X→IG 先行 ➔ 二号车 D₅→IG 待解锁即放行</option>
+                <option value="track_occupied">⑤ 股道已停二号车：列车接车禁开正常信号(可办HB引导) vs 调车连挂允许白灯 B</option>
+                <option value="custom">⑥ 自定义双车联锁实验（自由任选二号车 B 的 33 条进路）</option>
+              </select>
+            </label>
+            <div id="station-train-b-wrap" hidden style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:6px">
+              <label style="flex:1 1 240px">二号车 B 进路：
+                <select id="station-route-b"></select>
+              </label>
+              <label style="flex:1 1 220px">二号车 B 位置：<span id="station-pos-b-label">-26.0</span>
+                <input id="station-train-b" type="range" min="-30" max="130" step="0.2" value="-26">
+              </label>
+            </div>
+            <div id="station-multitrain-note" class="station-lock-card" hidden></div>
+          </div>
+          <div id="station-stages" class="stage-bar" aria-label="6502进路控制阶段">
+            <button data-stage="0">0 常态空闲</button>
+            <button data-stage="1">1 按压按钮(LAJ/方向↑)</button>
+            <button data-stage="2">2 选岔转岔(1DQJ/2DQJ)</button>
+            <button data-stage="3">3 选排一致(FKJ/KJ↑)</button>
+            <button data-stage="4">4 进路锁闭(SJ/1LJ/2LJ↓)</button>
+            <button data-stage="5" class="active">5 开放信号与三点解锁</button>
+          </div>
+          <div class="cancel-controls">
+            <span class="cancel-label">第3.3.4 &amp; 9.5–9.6节 解锁与引导：</span>
+            <button id="btn-zqa" class="quiet-button">总取消 (ZQA)</button>
+            <button id="btn-zra" class="quiet-button">总人解 (ZRA·延时)</button>
+            <button id="btn-sga" class="quiet-button">区故解 (SGA+ZRA·图9.6.1)</button>
+            <button id="btn-reopen" class="quiet-button">重新开放信号 (FKJ↑)</button>
+            <button id="btn-guide" class="quiet-button">🚨 引导接车 (YXJ↑ · HB)</button>
+          </div>
+          <div id="guide-controls" class="cancel-controls" style="margin-top:6px;border-top:1px dashed var(--edge);padding-top:6px">
+            <span class="cancel-label">引导条件与咽喉总锁闭（PDF p.49）：</span>
+            <label class="inline-check"><input id="guide-manual-confirm" type="checkbox">人工确认道岔位置正确</label>
+            <button id="btn-guide-totallock" class="quiet-button">🔒 咽喉引导总锁闭 (YZA)</button>
+            <label class="inline-check"><input id="guide-firstsec-fault" type="checkbox">内方首区段故障 (15s维持)</label>
+            <button id="btn-guide-hold" class="quiet-button" hidden>⏱ 维持引导开放 (重置15s)</button>
+            <label class="inline-check"><input id="hostile-route-fault" type="checkbox">模拟敌对进路已建立</label>
+            <span id="guide-status-hint" style="font-size:12px;color:#9ec0d8"></span>
+          </div>
+          <div class="fault-controls">
+            <label class="inline-check"><input id="lamp-fault" type="checkbox">灯丝双断 (DJ ↓)</label>
+            <label class="inline-check"><input id="switch-fault" type="checkbox">11道岔失表示 (DBJ/FBJ ↓)</label>
+            <label class="inline-check"><input id="poor-shunt" type="checkbox">7-11DG 瞬间分路不良</label>
+            <label>6502 网路线透视：
+              <select id="station-net-view">
+                <option value="matrix">20 继电器状态矩阵（点击微距）</option>
+                <option value="line1_7">1–7 线：选排与 KJ 一致检查</option>
+                <option value="line8_11">8–11 线：XJJ / 10线自闭 / LXJ</option>
+                <option value="line12_13">12–13 线：三点检查与 CJ 快慢动作</option>
+              </select>
+            </label>
+            <button id="btn-blind-fault" class="quiet-button">🔍 随机注入盲测故障考题</button>
+          </div>
+          <div id="blind-diag-bar" class="blind-diag-bar" hidden>
+            <strong>🩺 盲测排故任务进行中：</strong>请观察信号机显示、轨道光带与 20 个继电器状态，判断当前真实故障：
+            <select id="blind-guess">
+              <option value="">-- 请选择诊断结论 --</option>
+              <option value="lamp">信号机主副灯丝双断丝 (DJ ↓ 切断 11 线)</option>
+              <option value="switch">11 号道岔失去表示 (DBJ/FBJ ↓ 切断 8/11 线)</option>
+              <option value="poorShunt">7-11DG 瞬间分路不良（正受三点检查与 FDGJ 缓放防护）</option>
+              <option value="stuckSection">7-11DG 分路遗留卡锁白光带（需确认无车后按 SGA+ZRA 区故解）</option>
+            </select>
+            <button id="blind-submit" class="primary-button">提交诊断</button>
+            <button id="blind-clear" class="quiet-button">退出盲测</button>
+          </div>
         </div>
         <div id="phase-controls" class="phase-controls" hidden>
-          <label class="inline-check"><input id="local-power" type="checkbox" checked>局部电源</label>
+          <label class="inline-check"><input id="local-power" type="checkbox" checked>局部电源 (1—2 · JJZ₂₂₀/JJF₁₁₀)</label>
           <label>频率条件 <select id="frequency"><option value="correct">符合 25 Hz 要求</option><option value="wrong">不符合要求</option></select></label>
-          <label>相位条件 <select id="phase"><option value="correct">符合要求</option><option value="reversed">相位反接</option><option value="wrong">不符合要求</option></select></label>
+          <label>相位条件 <select id="phase"><option value="correct">符合要求</option><option value="reversed">相位反接 180°</option><option value="wrong">不符合要求</option></select></label>
         </div>
       </section>
       <section class="circuit-panel" aria-label="同步原理图">
-        <div class="panel-heading"><h3 id="circuit-title">电路与接点同步</h3><span class="legend"><i class="legend-on"></i>有电流／接通 <i class="legend-off"></i>无电流／断开</span></div>
+        <div class="panel-heading"><h3 id="circuit-title">电路与接点同步</h3><span class="legend"><i class="legend-on"></i>吸起／导通 <i class="legend-warn"></i>缓放／锁闭 <i class="legend-off"></i>落下／断开</span></div>
         <div id="circuit"></div>
         <p id="circuit-note" class="circuit-note"></p>
       </section>
-      <div class="timeline-panel" id="timeline-panel" hidden><h3>本次运行记录</h3><ol id="timeline"></ol></div>
+      <section class="textbook-panel" aria-label="教材原图对照"><div class="panel-heading"><h3>与教材原图逐项对照</h3><button id="open-source-page" class="text-button">打开完整原页 →</button></div><div id="figure-tabs" class="figure-tabs"></div><button id="figure-image-button" class="figure-image-button" aria-label="放大教材原图"><img id="figure-image" alt="教材原图摘录"></button><p id="figure-caption"></p><div id="figure-binding" class="figure-binding"></div>
+        <details class="source-ledger"><summary>部件与来源核对表</summary><div id="source-ledger"></div></details>
+      </section>
+      <div class="timeline-panel" id="timeline-panel" hidden><h3>本次运行与联锁时序记录</h3><button id="export-journey" class="text-button" hidden>导出本次运行记录</button><p id="journey-note"></p><ol id="timeline"></ol></div>
     </section>
     <aside class="inspector" aria-label="动作状态与原理说明">
+      <section class="spec-panel"><div class="section-eyebrow">TEXTBOOK MODEL</div><h3 id="actual-model"></h3><dl id="model-specs"></dl><button id="open-spec-table" class="text-button">核对表4.1.4原页 →</button></section>
       <section class="status-panel"><div class="section-eyebrow">LIVE STATE</div><h3>当前发生了什么</h3><dl id="state-readout" aria-live="polite"></dl><div id="action-chain" class="action-chain"></div><p id="state-reason" class="state-reason"></p></section>
       <section class="principle-panel"><div class="section-eyebrow">HOW IT WORKS</div><h3 id="principle-title">为什么会动作</h3><div id="principle"></div></section>
-      <section id="part-panel" class="part-panel"><div class="section-eyebrow">EXPLORE A PART</div><h3 id="part-title">点击模型中的部件</h3><p id="part-description">从线圈开始，看看电流如何变成接点的机械动作。</p><div id="part-list" class="part-chips"></div></section>
-      <section class="challenge"><div class="section-eyebrow">TRY IT YOURSELF</div><h3>先猜，再操作</h3><p id="challenge-question"></p><button id="challenge-answer" class="text-button">查看解释 →</button><p id="challenge-explanation" hidden></p></section>
+      <section id="part-panel" class="part-panel"><div class="section-eyebrow">EXPLORE A PART</div><h3 id="part-title">点击模型中的部件</h3><p id="part-description">从线圈开始，看看电流如何变成接点的机械动作。</p><div id="part-list" class="part-chips"></div>
+        <div id="part-source" class="part-source" hidden><div class="source-image"><img id="part-source-image" alt="所选部件对应的教材区域"><span id="part-source-region"></span></div><p id="part-source-note"></p><button id="part-source-open" class="text-button">打开对应教材原页</button></div></section>
+      <section class="challenge">
+        <div class="challenge-header">
+          <div class="section-eyebrow">TEXTBOOK EXAM &amp; FAULT LAB</div>
+          <div class="quiz-nav">
+            <button id="quiz-prev" class="quiet-button" aria-label="上一题">◀</button>
+            <span id="quiz-counter">考点 1 / 12</span>
+            <button id="quiz-next" class="quiet-button" aria-label="下一题">▶</button>
+          </div>
+        </div>
+        <h3 id="quiz-title">先思考，再在 3D 场景验证</h3>
+        <p id="challenge-question"></p>
+        <div class="quiz-actions">
+          <button id="quiz-load-scene" class="quiet-button">⚡ 一键载入本题 3D 场景</button>
+          <button id="challenge-answer" class="text-button">查看教材解析 →</button>
+        </div>
+        <p id="challenge-explanation" hidden></p>
+      </section>
       <section class="reference-panel"><h3>教材依据与模型边界</h3><p id="reference"></p><p id="model-boundary"></p><button id="source-button" class="text-button">查看来源与简化说明 →</button></section>
     </aside>
   </main>
-  <footer>以接点连接解释状态，以教材条件解释动作。<span>教学模型 · 非设备尺寸复刻</span></footer>
-  <dialog id="help-dialog"><div class="dialog-heading"><h2>怎样使用实验台</h2><button class="dialog-close quiet-button" aria-label="关闭说明">关闭 ✕</button></div><ol><li>在左侧选一种继电器，点击正向通电、反向通电或断电。</li><li>拖动模型旋转、滚轮缩放；点击实体或右侧部件名，查看作用。也可聚焦模型后用方向键旋转、＋／− 缩放。</li><li>打开透明外壳、拆解结构或慢动作，对照下方接点图观察动作。</li><li>切到“轨道运行”，点击“列车通过”或拖动位置，比较空闲、分路与故障。</li><li>整流式场景可打开“一送两受”；相敏式场景可改变局部电源、频率和相位条件。</li></ol><p>绿色表示接通或满足条件，灰色表示断开；所有状态同时有文字说明。GJ 吸起只提供区段空闲条件，不能单独决定信号开放。</p><p>GLB 导出保留当前拆解和衔铁姿态，可用常见三维查看器或 Blender 打开；文字标注、磁路动画与交互程序不在 GLB 中。</p></dialog>
-  <dialog id="source-dialog"><div class="dialog-heading"><h2>来源、适用条件与简化</h2><button class="dialog-close quiet-button" aria-label="关闭来源说明">关闭 ✕</button></div><p>主要依据：岳强主编《车站信号自动控制》第二版，中国铁道出版社，2024 年。本项目提供的原 PDF 文件名为“传感器自动控制.pdf”。相关原图已核对。</p><ul><li>第 4.1 节：书内 44—49 页／PDF 54—59 页；图 4.1.1—4.1.7。无极、偏极、极性保持的工作原理、接点与常态。</li><li>第 5.3.1 节：书内 77—78 页／PDF 87—88 页；图 5.3.1—5.3.2。JZXC-480 整流式轨道电路及一送多受。</li><li>第 5.3.2 节：书内 78—79 页／PDF 88—89 页；图 5.3.3。25 Hz 相敏轨道电路及二元二位轨道继电器的接口条件。</li></ul><p><strong>教材与补充示意：</strong>AX 机构按图示提取核心部件，不按实物尺寸建模；偏极与极性保持保留永久磁铁和动作差别，但机械连接采用简化教学结构。教材没有展开二元二位继电器内部机构，本模型中双电磁系统、铝翼与转矩的表示属于补充原理示意，不对应具体产品构造。整流模块和波形为等效示意，不表示 JZXC-480 的完整内部接线。</p><p><strong>状态与时间：</strong>状态由教材给出的条件进行离散判断，不计算真实磁场、电流阈值、相角或轨道参数。动画速度、线圈匝数、间隙和比例都是教学设定；接点切换采用先断后接示意。暂态中右侧会显示“转换中”，稳态结果在动画结束后显示。</p><p><strong>轨道场景：</strong>轮对以理想低阻分路表示；轨道断路以单一导电路径断开表示，不推论所有实际断轨均可检出。一送两受示意中，主 DGJ 励磁回路串入支 DGJ₁ 的前接点；任一分支不能证明空闲时，总检查不成立。相敏场景不同时叠加这套整流式一送两受示意。</p><p><strong>术语：</strong>普通单稳态继电器释放时，中—前断开、中—后接通；可对应通常所说的常开／常闭。铁路“常态”按设备通常状态确定，GJ 常态为吸起。极性保持继电器断电仍可保持原位，不能套用“断电必落下”。</p><p>图 4.1.5 的正文存在图 (a)/(b) 对应交叉，模型采用正文明确的电流方向规则：1 进 4 出为定位，4 进 1 出为反位，断电保持。</p><p>3D 引擎：Three.js r160，MIT 许可；许可证随本地文件附带。模型与课程逻辑由本项目制作。</p></dialog>
+  <footer>以接点连接解释状态，以教材条件解释动作，以全书闭环掌握逻辑。<span>教学模型 · 岳强《车站信号自动控制》第二版</span></footer>
+  <dialog id="help-dialog"><div class="dialog-heading"><h2>全书闭合学习工作台使用指南</h2><button class="dialog-close quiet-button" aria-label="关闭说明">关闭 ✕</button></div><ol><li><strong>00 · 全书路径 &amp; 127题库</strong>：按第 1–13 章全景地图推进学习，任意概念或思考题都可一键打开对应 277 页原书扫描页、或带预置参数直达 3D/电路实验并记录掌握进度。</li><li><strong>01 · 继电器与接口 (15项)</strong>：涵盖全部 11 型物理/接口继电器（支持拆解观察与并排对比）、第 4 章自闭与 5 种混线防护、第 5 章四线/五线制道岔与两方向出站点灯、以及第 13 章脉冲变压器/电容泵安全驱采接口。</li><li><strong>2.3 · 信号机建模 (6型)</strong>：覆盖教材第 2.3 节 6 类高柱/矮型信号机（13 种机构变体）3D 拆解、色灯显示、双灯丝转换与 2DJ↓ 防升级降级红灯联动。</li><li><strong>02 · 轨道电路分路</strong>：实操 50 Hz（含一送两受）与 25 Hz 相敏轨道电路轮对分路、断轨与 180° 相敏反向保护。</li><li><strong>03 · 图3.1.1/表3.2.2 车站联锁</strong>：覆盖表 3.2.2 全部 33 条接/发/调车进路与 5 种多列车并行/抵触/股道占车场景、ZQA/ZRA/SGA(区故解)与 HB 引导接车、1–15 线透视图与盲测排故挑战；点击任意 3D 组合架继电器可微距跳转。</li><li><strong>04 · 站场·联锁表·计算机联锁</strong>：交互练习道岔定位、超限绝缘、进路范围、表 3.2.2 联锁表编制（支持送入沙盘 3D 试跑）、1–7 线单步选排，以及双机热备/二取二/三取二/二乘二取二故障注入仿真。</li></ol></dialog>
+  <dialog id="source-dialog"><div class="dialog-heading"><h2>教材、型号与建模边界</h2><button class="dialog-close quiet-button" aria-label="关闭来源说明">关闭 ✕</button></div><p>主要依据：岳强主编《车站信号自动控制》（第二版，2024 年 6 月，ISBN 978-7-113-31398-2）。知识库记录了277页原页面与168张索引图的阅读覆盖。程序中的127题答案、全部接点编号及新增模型装配尚未逐项精确核定。</p><p>型号参数与功能原理按各项教材页标注。模型尺寸、材料、紧固件及安装位置未经厂家图核实。时间继电器的4组接点与相敏内部机构为功能示意。人工解锁计时显示教材秒数，普通演示加速60倍、慢动作加速15倍。（PDF p.51–52 个别例题矛盾、表 4.1.4/4.1.5 JZXC-480 4.3V/4.8V 并存、PDF p.149/169/201/242 图文差异均已透明保留提示；现有 PDF 书内 266 页后直接为封底，缺失附录 3，绝不自行补造）。</p></dialog>
   <div id="toast" role="status" hidden></div>
+  <dialog id="original-dialog" class="original-dialog">
+    <div class="dialog-heading">
+      <h2 id="original-title">教材原页</h2>
+      <div class="page-dialog-nav">
+        <button id="orig-prev" class="quiet-button">◀ 上一页</button>
+        <input id="orig-input" type="number" min="1" max="277" aria-label="跳转PDF页码" />
+        <button id="orig-go" class="quiet-button">跳转</button>
+        <button id="orig-next" class="quiet-button">下一页 ▶</button>
+        <button class="dialog-close quiet-button" aria-label="关闭教材原页">关闭 ✕</button>
+      </div>
+    </div>
+    <img id="original-image" alt="教材完整原页">
+    <p id="orig-foot">原页来自《车站信号自动控制》（第二版）离线全页图库（PDF 第 1–277 页，书内 266 页后缺附录 3）。</p>
+  </dialog>
   <noscript>需要启用 JavaScript 才能操作三维教学模型。</noscript>
 </body>
 </html>
